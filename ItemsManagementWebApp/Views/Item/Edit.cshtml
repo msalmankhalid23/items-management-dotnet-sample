@@ -1,0 +1,149 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model int
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title> Edit Item</title>
+    <script>
+        //ajax calls
+        function getItemById(id) {
+            $.ajax({
+                url: 'https://localhost:7131/api/v1/items/' + id,
+                type: 'GET',
+                success: function (data) {
+                    console.log(data);
+                    if (data) {
+                        $("#Name").val(data.name);
+                        $("#descriptionField").val(data.description);
+                    }
+                },
+                error: function (error) {
+                    console.error('Error fetching items:', error);
+                }
+            });
+        }
+
+        function updateItem(id) {
+
+            var updatedItem = {
+                Name: $("#Name").val(),
+                Description: $("#descriptionField").val(),
+            };
+
+            $.ajax({
+                type: "PUT",
+                url: 'https://localhost:7131/api/v1/Items/'+id,
+                data: JSON.stringify(updatedItem),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+
+                    $("#successMessage").show();
+                    setTimeout(function () {
+                        $("#successMessage").hide();
+                    }, 2000);
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+        }
+        
+        $(document).ready(function () {
+            // Call getItem against Id when the page is ready
+            getItemById(@Model);
+
+            let isValidInput = false;
+
+            //Hide error messages initially
+            $("#nameError").hide();
+
+            //Validate input on keystroke
+            $("#Name").keyup(function () {
+                debugger
+                const inputValue = $("#Name").val();
+                if (!validateEmptyField(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Please enter name of an Item!');
+                } else if (!validateItemNameLength(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Item name should be atleast three characters long!');
+                }
+                else if (!validateItemName(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Please provide a name with a mix of letters and other characters!');
+                } else {
+                    isValidInput = true;
+                    $("#nameError").hide();
+                }
+                $('#addButton').prop('disabled', !isValidInput);
+            })
+            $("#createButton").click(function () {
+                if (isValidInput) {
+                    createItem();
+                }
+            });
+        });
+
+        function displayErrorMessage(labelName, message) {
+            $(`#${labelName}`).show();
+            $(`#${labelName}`).text(message);
+        }
+
+        function validateEmptyField(inputValue) {
+            if (inputValue === undefined || inputValue === '') {
+                return false;
+            }
+            return true;
+        }
+
+        function validateItemNameLength(inputValue) {
+            if (inputValue.length < 3) {
+                return false;
+            }
+            return true;
+        }
+
+        function validateItemName(inputValue) {
+            const regex = /^\d+$/;
+            if (regex.test(inputValue)) {
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <div>
+        @using (Html.BeginForm())
+        {
+            <div style="margin-top:20px">
+                <div>
+                    <label> Name </label>
+                    <input id="Name" type="text" />
+                    <div>
+                        <label class="text-danger" id="nameError"></label>
+                    </div>
+                </div>                                
+                <div style="margin-top:20px">
+                    <label> Description </label>
+                    <input id="descriptionField" type="text" />
+                </div>
+            </div>
+            <div style="margin-top:20px">
+                <input type="button" value="Update" onclick="updateItem(@Model)" />
+                @Html.ActionLink("Back", "Index", "Item", null, new { @class = "btn btn-success" })
+                <label id="successMessage" style="display:none;"> Item Updated! </label>
+            </div>
+            
+        }
+    </div>
+</body>
+
+</html>

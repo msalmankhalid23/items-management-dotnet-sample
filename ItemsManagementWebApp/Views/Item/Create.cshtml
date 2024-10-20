@@ -1,0 +1,119 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model ItemsManagementWebApp.Models.Item
+@{
+    ViewBag.Title = "Add Item";
+}
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let isValidInput = false;
+
+            //Hide error messages initially
+            $("#nameError").hide();
+
+            $("#Name").keyup(function () {
+                const inputValue = $("#Name").val();
+                if (!validateEmptyField(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Enter name of an Item!');
+                } else if (!validateItemNameLength(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Item name should be more than two characters long!');
+                }
+                else if (!validateItemName(inputValue)) {
+                    isValidInput = false;
+                    displayErrorMessage('nameError', 'Item name can not be digits!');
+                } else {
+                    isValidInput = true;
+                    $("#nameError").hide();
+                }
+                $('#addButton').prop('disabled', !isValidInput);
+            })
+            $("#addButton").click(function () {
+                debugger
+                if (isValidInput) {
+                    createItem();
+                }
+            });
+        });
+        function displayErrorMessage(labelName, message) {
+            $(`#${labelName}`).show();
+            $(`#${labelName}`).text(message);
+        }
+
+        function validateEmptyField(inputValue) {
+            if (inputValue === undefined || inputValue === '') {
+                return false;
+            }
+            return true;
+        }
+
+        function validateItemNameLength(inputValue) {
+            if (inputValue.length < 3) {
+                return false;
+            }
+            return true;
+        }
+
+        function validateItemName(inputValue) {
+            const regex = /^\d+$/;
+            if (regex.test(inputValue)) {
+                return false;
+            }
+            return true;
+        }
+
+        //ajax Call
+        function createItem() {
+
+            var newItem = {
+                Id: 0,
+                Name: $("#Name").val(),
+                Description: ""
+            };
+
+            $.ajax({
+                type: "POST",
+                url: 'https://localhost:7131/api/v1/Items',
+                data: JSON.stringify([newItem]),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+
+                    // Clear form fields
+                    $("#createItemForm")[0].reset();
+
+                    $("#successMessage").show();
+                    setTimeout(function () {
+                        $("#successMessage").hide();
+                    }, 2000);
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+        }
+
+    </script>
+
+</head>
+<div class="row">
+    <h2>@ViewBag.Title</h2>
+    <h3>@ViewBag.Message</h3>
+    <form id="createItemForm">
+        <div class="form-group">
+            @Html.LabelFor(model => model.Name)
+            @Html.TextBoxFor(model => model.Name, new { @class = "form-control" })
+            <label class="text-danger" id="nameError"></label>
+        </div>
+        <button type="button" id="addButton" disabled class="btn btn-primary">Add</button>
+        @Html.ActionLink("Back", "Index", "Item", null, new { @class = "btn btn-success" })
+    </form>
+
+    <label id="successMessage" style="display:none;"> Item Added! </label>
+</div>

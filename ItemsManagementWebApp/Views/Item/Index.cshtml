@@ -1,0 +1,91 @@
+﻿
+@model List<ItemsManagementWebApp.Models.Item>
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <h1>Web App</h1>
+    <p class="lead"> Sample test project</p>
+</div>
+
+<div class="row">
+    <div>
+        @Html.ActionLink("Add New Item", "Create", "Item", null, new { @class = "btn btn-primary" })
+    </div>
+    <div>
+        <h2>Item List</h2>
+
+        <table class="table table-bordered table-responsive table-hover">
+            <tbody id="itemsTable">
+                <tr>
+                    <th>Id </th>
+                    <th>Name </th>
+                    <th>Description </th>
+                    <th>Actions </th>
+                </tr>
+            </tbody>
+
+        </table>
+        <ul>
+        </ul>
+    </div>
+    <script>
+        function confirmDelete(itemId) {
+            var result = confirm("Are you sure you want to delete this item?");
+            if (result) {
+                deleteItem(itemId);
+            }
+        }
+
+        function deleteItem(id) {
+
+            $.ajax({
+                type: "DELETE",
+                url: 'https://localhost:7131/api/v1/Items/' + id,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    $("#itemsTable").find('tr[data-item-id="' + id + '"]').remove();
+
+                    setTimeout(function () {
+                        alert("Item Deleted");
+                    }, 50);
+
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+        }
+
+        // Function to get all items
+        function getAllItems() {
+            $.ajax({
+                url: 'https://localhost:7131/api/v1/items',
+                type: 'GET',
+                success: function (data) {
+
+                    var itemList = "";
+                    $.each(data, function (index, item) {
+                        itemList += "<tr data-item-id=" + item.id + "><td>" + item.id + "</td><td>" + item.name + "</td><td>" + item.description +
+                            '</td><td><span style="padding-left:20px"> <a href="/Item/Edit/' + item.id + '" class="btn btn-primary">Edit</a> ' +
+                            '<button class="btn btn-danger" onclick="confirmDelete(' + item.id + ')">Delete</button> </span>' +
+                            "</td></tr>";
+                    });
+
+                    $("table").append(itemList);
+                },
+                error: function (error) {
+                    console.error('Error fetching items:', error);
+                }
+            });
+        }
+
+        // Call getAllItems when the page is ready
+        $(document).ready(function () {
+            getAllItems();
+        });
+    </script>
+</div>
